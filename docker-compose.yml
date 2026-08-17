@@ -1,0 +1,12 @@
+services:
+  lyceum:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4100:4100"
+    env_file:
+      - .env
+    volumes:
+      - ./backend/data:/app/backend/data
+    restart: unless-stopped
