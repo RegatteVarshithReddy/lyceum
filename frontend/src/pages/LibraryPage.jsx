@@ -3,8 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import CourseCard from "../components/CourseCard.jsx";
 
+const UNCATEGORIZED = "Uncategorized";
+
 export default function LibraryPage() {
   const [courses, setCourses] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [activeCategory, setActiveCategory] = useState("All");
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -15,6 +19,7 @@ export default function LibraryPage() {
 
   function load() {
     api.listCourses().then(setCourses).catch((err) => setError(err.message));
+    api.listCategories().then(setCategories).catch(() => {});
   }
 
   useEffect(load, []);
@@ -137,11 +142,31 @@ export default function LibraryPage() {
         </div>
       )}
 
+      {!results && courses && courses.length > 0 && categories.length > 0 && (
+        <div className="category-filter-bar">
+          {["All", ...categories, UNCATEGORIZED].map((cat) => (
+            <button
+              key={cat}
+              className={`category-chip${activeCategory === cat ? " active" : ""}`}
+              onClick={() => setActiveCategory(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+
       {!results && courses && courses.length > 0 && (
         <div className="course-grid">
-          {courses.map((c) => (
-            <CourseCard key={c.id} course={c} />
-          ))}
+          {courses
+            .filter((c) => {
+              if (activeCategory === "All") return true;
+              if (activeCategory === UNCATEGORIZED) return !c.category;
+              return c.category === activeCategory;
+            })
+            .map((c) => (
+              <CourseCard key={c.id} course={c} />
+            ))}
         </div>
       )}
     </>

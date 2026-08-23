@@ -20,11 +20,31 @@ export default function CoursePage() {
   const { courseId } = useParams();
   const [course, setCourse] = useState(null);
   const [marking, setMarking] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [categoryInput, setCategoryInput] = useState("");
+  const [savingCategory, setSavingCategory] = useState(false);
 
   useEffect(() => {
     setCourse(null);
-    api.getCourse(courseId).then(setCourse);
+    api.getCourse(courseId).then((c) => {
+      setCourse(c);
+      setCategoryInput(c.category || "");
+    });
+    api.listCategories().then(setCategories).catch(() => {});
   }, [courseId]);
+
+  async function saveCategory() {
+    const category = categoryInput.trim();
+    if (category === (course.category || "")) return;
+    setSavingCategory(true);
+    try {
+      const { category: saved } = await api.setCourseCategory(courseId, category);
+      setCourse((c) => ({ ...c, category: saved }));
+      setCategoryInput(saved || "");
+    } finally {
+      setSavingCategory(false);
+    }
+  }
 
   const groups = useMemo(() => (course ? groupBySection(course.videos) : []), [course]);
 
@@ -61,7 +81,24 @@ export default function CoursePage() {
           {marking ? "Marking…" : "Mark all watched"}
         </button>
       </div>
-      <h1 className="page-title">{course.title}</h1>
+      <h1 className="page-title" style={{ marginBottom: 10 }}>{course.title}</h1>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+        <input
+          className="category-input"
+          list="category-options"
+          placeholder="Uncategorized — click to set a category"
+          value={categoryInput}
+          onChange={(e) => setCategoryInput(e.target.value)}
+          onBlur={saveCategory}
+          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+        />
+        <datalist id="category-options">
+          {categories.map((cat) => (
+            <option key={cat} value={cat} />
+          ))}
+        </datalist>
+        {savingCategory && <span style={{ color: "var(--text-dim)", fontSize: 12 }}>Saving…</span>}
+      </div>
       {groups.map((group, i) => (
         <div key={i}>
           {group.section && <div className="section-heading" style={{ marginTop: i === 0 ? 0 : 28 }}>{group.section}</div>}

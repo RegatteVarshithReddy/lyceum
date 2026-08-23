@@ -7,13 +7,16 @@ export default function CourseCard({ course }) {
 
   return (
     <Link className="course-card" to={`/courses/${course.id}`}>
-      {course.cover_thumbnail ? (
-        <img className="course-poster" src={`/api/thumbnails/${course.cover_thumbnail}`} alt="" />
-      ) : (
-        <div className="course-poster-fallback" style={posterColors(course.title)}>
-          {initials(course.title)}
-        </div>
-      )}
+      <div style={{ position: "relative" }}>
+        {course.cover_thumbnail ? (
+          <img className="course-poster" src={`/api/thumbnails/${course.cover_thumbnail}`} alt="" />
+        ) : (
+          <div className="course-poster-fallback" style={posterColors(course.title)}>
+            {initials(course.title)}
+          </div>
+        )}
+        {course.category && <div className="category-tag">{course.category}</div>}
+      </div>
       <div className="course-card-body">
         <div className="course-card-title">{course.title}</div>
         <div className="progress-bar">

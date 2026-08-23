@@ -28,6 +28,7 @@ function addColumnIfMissing(table, column, definition) {
   }
 }
 addColumnIfMissing("videos", "section", "TEXT");
+addColumnIfMissing("courses", "category", "TEXT");
 
 export default db;
 export const thumbnailsDir = path.join(dataDir, "thumbnails");

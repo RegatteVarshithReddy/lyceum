@@ -21,6 +21,9 @@ export const api = {
   listCourses: () => request("/api/library/courses"),
   getCourse: (id) => request(`/api/library/courses/${id}`),
   markCourseWatched: (id) => request(`/api/library/courses/${id}/mark-watched`, { method: "POST" }),
+  listCategories: () => request("/api/library/categories"),
+  setCourseCategory: (id, category) =>
+    request(`/api/library/courses/${id}/category`, { method: "PUT", body: JSON.stringify({ category }) }),
   search: (q) => request(`/api/library/search?q=${encodeURIComponent(q)}`),
   randomUnwatched: () => request("/api/library/random-unwatched"),
 

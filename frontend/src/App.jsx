@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, NavLink, useLocation } from "react-router-dom";
 import { api } from "./api.js";
+import { getTheme, toggleTheme } from "./theme.js";
 import LibraryPage from "./pages/LibraryPage.jsx";
 import CoursePage from "./pages/CoursePage.jsx";
 import PlayerPage from "./pages/PlayerPage.jsx";
@@ -17,7 +18,12 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [streak, setStreak] = useState(0);
   const [readingStreak, setReadingStreak] = useState(0);
+  const [theme, setThemeState] = useState(getTheme());
   const location = useLocation();
+
+  function handleToggleTheme() {
+    setThemeState(toggleTheme());
+  }
 
   useEffect(() => {
     api
@@ -50,6 +56,14 @@ export default function App() {
   if (!authed) {
     return (
       <div className="login-screen">
+        <button
+          className="btn-ghost theme-toggle"
+          onClick={handleToggleTheme}
+          aria-label="Toggle dark/light mode"
+          style={{ position: "fixed", top: 20, right: 24 }}
+        >
+          {theme === "dark" ? "☀️" : "🌙"}
+        </button>
         <form className="login-card" onSubmit={handleLogin}>
           <h1>
             Lyceum<span style={{ color: "var(--accent)" }}>.</span>
@@ -104,6 +118,9 @@ export default function App() {
                 📚 {readingStreak}-day streak
               </div>
             )}
+            <button className="btn-ghost theme-toggle" onClick={handleToggleTheme} aria-label="Toggle dark/light mode">
+              {theme === "dark" ? "☀️" : "🌙"}
+            </button>
             <button
               className="btn-ghost"
               onClick={async () => {

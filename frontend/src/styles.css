@@ -6,6 +6,7 @@
   --text: #eef1f6;
   --text-dim: #8b93a3;
   --accent: #2dd4bf;
+  --on-accent: #04211d;
   --accent-dim: #163330;
   --accent-strong: #5eead4;
   --gold: #e8b84d;
@@ -15,6 +16,22 @@
   --radius-sm: 8px;
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root[data-theme="light"] {
+  --ink: #f3f5f9;
+  --surface: #ffffff;
+  --surface-raised: #eef1f6;
+  --border: #dde2ea;
+  --text: #12161d;
+  --text-dim: #5b6472;
+  --accent: #0f766e;
+  --on-accent: #ffffff;
+  --accent-dim: #d9f2ee;
+  --accent-strong: #0b5c56;
+  --gold: #8a5f10;
+  --gold-dim: #faf0d4;
+  --danger: #b3222f;
 }
 
 * {
@@ -52,7 +69,7 @@ a {
 
 .btn-primary {
   background: var(--accent);
-  color: #04211d;
+  color: var(--on-accent);
   border: none;
   border-radius: var(--radius-sm);
   padding: 10px 18px;
@@ -77,6 +94,12 @@ a {
 .btn-ghost:hover {
   color: var(--text);
   border-color: var(--accent);
+}
+
+.theme-toggle {
+  padding: 9px 12px;
+  font-size: 15px;
+  line-height: 1;
 }
 
 /* --- Login screen -------------------------------------------------- */
@@ -206,6 +229,46 @@ a {
 
 /* --- Library grid ---------------------------------------------------- */
 
+.category-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.category-chip {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.category-chip:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.category-chip.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.category-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 13px;
+  min-width: 280px;
+}
+.category-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
 .course-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -246,6 +309,22 @@ a {
   font-weight: 600;
   color: rgba(255, 255, 255, 0.85);
   background: linear-gradient(135deg, var(--poster-a, #1c3b3a), var(--poster-b, #16202c));
+}
+
+.category-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  max-width: calc(100% - 16px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .course-card-body {

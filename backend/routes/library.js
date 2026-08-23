@@ -18,7 +18,7 @@ router.post("/scan", async (req, res) => {
 
 const listCoursesStmt = db.prepare(`
   SELECT
-    c.id, c.title, c.path,
+    c.id, c.title, c.path, c.category,
     COUNT(v.id) AS video_count,
     COALESCE(SUM(p.completed), 0) AS completed_count,
     (SELECT thumbnail_path FROM videos
@@ -36,6 +36,16 @@ router.get("/courses", (req, res) => {
   res.json(listCoursesStmt.all());
 });
 
+const listCategoriesStmt = db.prepare(`
+  SELECT DISTINCT category FROM courses
+  WHERE archived_at IS NULL AND category IS NOT NULL AND category != ''
+  ORDER BY category COLLATE NOCASE
+`);
+
+router.get("/categories", (req, res) => {
+  res.json(listCategoriesStmt.all().map((r) => r.category));
+});
+
 const getCourseStmt = db.prepare("SELECT * FROM courses WHERE id = ? AND archived_at IS NULL");
 const listCourseVideosStmt = db.prepare(`
   SELECT v.*, p.position_seconds, p.completed, p.last_watched_at
@@ -49,6 +59,18 @@ router.get("/courses/:id", (req, res) => {
   const course = getCourseStmt.get(req.params.id);
   if (!course) return res.status(404).json({ error: "Not found" });
   res.json({ ...course, videos: listCourseVideosStmt.all(req.params.id) });
+});
+
+const setCourseCategoryStmt = db.prepare(`
+  UPDATE courses SET category = ?, updated_at = datetime('now') WHERE id = ? AND archived_at IS NULL
+`);
+
+router.put("/courses/:id/category", (req, res) => {
+  const course = getCourseStmt.get(req.params.id);
+  if (!course) return res.status(404).json({ error: "Not found" });
+  const category = (req.body.category || "").trim() || null;
+  setCourseCategoryStmt.run(category, req.params.id);
+  res.json({ ok: true, category });
 });
 
 const markCourseWatchedStmt = db.prepare(`
