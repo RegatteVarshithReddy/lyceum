@@ -48,13 +48,12 @@ router.get("/:id/stream", async (req, res) => {
     res.set("Content-Range", upstream.headers.contentRange);
   }
 
-  // Multi-GB course recordings occasionally have their upstream WebDAV
-  // connection go silent mid-transfer (Nextcloud dropping it without an
-  // error, likely a PHP execution-time limit on very large downloads)
-  // instead of erroring or closing. Left alone, the response just hangs
-  // forever and the <video> element sits stuck at whatever position it
-  // stalled on. Destroying the stream after an idle gap lets the browser's
-  // own retry/re-range logic pick the transfer back up.
+  // Large course recordings can have the connection to the client stall
+  // completely (TCP write buffer stuck at capacity, no drain at all — not
+  // merely slow) rather than erroring or closing. Left alone, the response
+  // hangs forever and the <video> element sits stuck at whatever position it
+  // stalled on. Destroying the stream after a genuinely idle gap lets the
+  // browser's own retry/re-range logic pick the transfer back up.
   const STALL_TIMEOUT_MS = 15000;
   let stallTimer;
   const resetStallTimer = () => {
