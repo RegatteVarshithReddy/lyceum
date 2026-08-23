@@ -20,6 +20,8 @@ export default function PlayerPage() {
   const videoRef = useRef(null);
   const lastPosRef = useRef(0);
   const playingRef = useRef(false);
+  const stallWatchRef = useRef({ time: 0, lastAdvance: Date.now() });
+  const recoveringRef = useRef(false);
 
   useEffect(() => {
     setVideo(null);
@@ -72,6 +74,47 @@ export default function PlayerPage() {
       clearInterval(id);
       reportProgress(true);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoId]);
+
+  // Very large course recordings can have their upstream connection stall
+  // mid-playback (the backend now detects and kills that stalled connection
+  // after 15s, but the browser doesn't automatically reconnect on its own).
+  // Watch for currentTime not advancing while we think we're playing, and
+  // force a fresh stream request resuming from wherever it stalled.
+  function attemptRecovery() {
+    const el = videoRef.current;
+    if (!el || recoveringRef.current) return;
+    recoveringRef.current = true;
+    const resumeAt = el.currentTime;
+    const wasPlaying = playingRef.current;
+
+    const onLoaded = () => {
+      el.removeEventListener("loadedmetadata", onLoaded);
+      el.currentTime = resumeAt;
+      if (wasPlaying) el.play().catch(() => {});
+      stallWatchRef.current = { time: resumeAt, lastAdvance: Date.now() };
+      recoveringRef.current = false;
+    };
+    el.addEventListener("loadedmetadata", onLoaded);
+    el.load();
+  }
+
+  useEffect(() => {
+    stallWatchRef.current = { time: 0, lastAdvance: Date.now() };
+    const id = setInterval(() => {
+      const el = videoRef.current;
+      if (!el || !playingRef.current || recoveringRef.current) {
+        stallWatchRef.current = { time: el?.currentTime ?? 0, lastAdvance: Date.now() };
+        return;
+      }
+      if (el.currentTime !== stallWatchRef.current.time) {
+        stallWatchRef.current = { time: el.currentTime, lastAdvance: Date.now() };
+      } else if (Date.now() - stallWatchRef.current.lastAdvance > 20000) {
+        attemptRecovery();
+      }
+    }, 4000);
+    return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId]);
 
@@ -168,6 +211,7 @@ export default function PlayerPage() {
               reportProgress();
             }}
             onEnded={handleEnded}
+            onError={attemptRecovery}
           />
         </div>
         <div className="player-toolbar">

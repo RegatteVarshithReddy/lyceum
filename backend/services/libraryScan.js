@@ -101,6 +101,14 @@ export async function scanLibrary() {
     .filter((item) => item.type === "directory")
     .sort((a, b) => collator.compare(a.name, b.name));
 
+  // Standalone recordings sometimes get dropped straight into the library
+  // root instead of their own course folder (e.g. a single long tutorial
+  // video). They don't fit the "folder = course" model at all, so give each
+  // one its own single-video course named after the file itself.
+  const topLevelVideoFiles = topLevel.filter(
+    (item) => item.type === "file" && VIDEO_EXTENSIONS.includes(extensionOf(item.name))
+  );
+
   // Bundle folders (see VIDEO_BUNDLE_FOLDERS) hold several distinct courses
   // rather than being one course themselves — expand them one level so
   // their subfolders become the actual course list.
@@ -122,6 +130,25 @@ export async function scanLibrary() {
   const seenVideoIds = [];
 
   const getVideoIdByPath = db.prepare("SELECT id FROM videos WHERE path = ?");
+
+  const applyLooseVideo = db.transaction((file) => {
+    const title = humanize(path.basename(file.name, path.extname(file.name)));
+    upsertCourse.run({ path: file.path, title });
+    const courseId = getCourseIdByPath.get(file.path).id;
+    seenCourseIds.push(courseId);
+
+    upsertVideo.run({
+      course_id: courseId,
+      path: file.path,
+      title,
+      extension: extensionOf(file.name),
+      size_bytes: file.size,
+      mtime: file.mtime,
+      section: null,
+      sort_order: 0,
+    });
+    seenVideoIds.push(getVideoIdByPath.get(file.path).id);
+  });
 
   const applyCourse = db.transaction((courseDir, videos, siblingVideoCounts) => {
     upsertCourse.run({ path: courseDir.path, title: courseDir.name });
@@ -159,6 +186,10 @@ export async function scanLibrary() {
     }
 
     applyCourse(courseDir, videoFiles, siblingVideoCounts);
+  }
+
+  for (const file of topLevelVideoFiles) {
+    applyLooseVideo(file);
   }
 
   archiveCoursesNotIn.run(JSON.stringify(seenCourseIds));
